@@ -12,6 +12,8 @@ var player = new Player({ x: 10, y: 240 })
 
 var background = new Image();
 background.src = './assets/Background.png';
+var regCar = new Image();
+regCar.src = './assets/cars_mini.png';
 
 var UpArrow = 38, DownArrow = 40, RightArrow = 39;
 
@@ -94,7 +96,7 @@ function render(elapsedTime, ctx) {
     //Clear previous frame
     ctx.clearRect(0, 0, game.HEIGHT, game.WIDTH);
     ctx.drawImage(background, 0, 0);
-
+    ctx.drawImage(regCar, 0, 0);
     player.render(elapsedTime, ctx);
 }
 
