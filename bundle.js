@@ -8,14 +8,20 @@ const Player = require('./player.js');
 /* Global variables */
 var canvas = document.getElementById('screen');
 var game = new Game(canvas, update, render);
-var player = new Player({x: 0, y: 240})
+var player = new Player({ x: 10, y: 240 })
+
+var background = new Image();
+background.src = './assets/Background.png';
+
+var UpArrow = 38, DownArrow = 40, RightArrow = 39;
 
 /**
  * @function masterLoop
  * Advances the game in sync with the refresh rate of the screen
  * @param {DOMHighResTimeStamp} timestamp the current time
  */
-var masterLoop = function(timestamp) {
+var masterLoop = function (timestamp) {
+
   game.loop(timestamp);
   window.requestAnimationFrame(masterLoop);
 }
@@ -31,8 +37,49 @@ masterLoop(performance.now());
  * the number of milliseconds passed since the last frame.
  */
 function update(elapsedTime) {
-  player.update(elapsedTime);
-  // TODO: Update the game objects
+    player.update(elapsedTime);
+    // TODO: Update the game objects
+    //Movement events
+    player.timeSinceInput += elapsedTime;
+    if (player.inputLock == 0) {
+        window.onkeydown = function (event) {
+            switch (event.keyCode) {
+                //up
+                case 38:
+                case 87:
+                    if (player.y < 60)
+                    {
+                        player.state = "up";
+                    }
+                    else {
+                        player.y -= 85;
+                        player.state = "up";
+                    }
+                    break;
+                    //right
+                case 39:
+                case 68:
+                    player.x += 85;
+                    player.state = "right";
+                    break;
+                    //down
+                case 40:
+                case 83:
+                    if ((game.HEIGHT - player.y) < 85) {
+                        player.state = "down";
+                    }
+                    else {
+                        player.y += 85;
+                        player.state = "down";
+                    }
+
+                    break;
+            }
+        }
+    }
+    else {
+        window.onkeydown = null;
+    }
 }
 
 /**
@@ -43,9 +90,12 @@ function update(elapsedTime) {
   * @param {CanvasRenderingContext2D} ctx the context to render to
   */
 function render(elapsedTime, ctx) {
-  ctx.fillStyle = "lightblue";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  player.render(elapsedTime, ctx);
+
+    //Clear previous frame
+    ctx.clearRect(0, 0, game.HEIGHT, game.WIDTH);
+    ctx.drawImage(background, 0, 0);
+
+    player.render(elapsedTime, ctx);
 }
 
 },{"./game.js":2,"./player.js":3}],2:[function(require,module,exports){
@@ -67,6 +117,10 @@ function Game(screen, updateFunction, renderFunction) {
   this.update = updateFunction;
   this.render = renderFunction;
 
+   //Height/Width
+  this.HEIGHT = screen.height;
+  this.WIDTH = screen.width;
+
   // Set up buffers
   this.frontBuffer = screen;
   this.frontCtx = screen.getContext('2d');
@@ -78,6 +132,7 @@ function Game(screen, updateFunction, renderFunction) {
   // Start the game loop
   this.oldTime = performance.now();
   this.paused = false;
+
 }
 
 /**
@@ -99,11 +154,13 @@ Game.prototype.loop = function(newTime) {
   var elapsedTime = newTime - this.oldTime;
   this.oldTime = newTime;
 
-  if(!this.paused) this.update(elapsedTime);
+  if (!this.paused) this.update(elapsedTime);
+
   this.render(elapsedTime, this.frontCtx);
 
-  // Flip the back buffer
+    // Flip the back buffer
   this.frontCtx.drawImage(this.backBuffer, 0, 0);
+
 }
 
 },{}],3:[function(require,module,exports){
@@ -131,23 +188,47 @@ function Player(position) {
   this.spritesheet.src = encodeURI('assets/PlayerSprite2.png');
   this.timer = 0;
   this.frame = 0;
+  this.inputLock = 0;
+  this.frameDelay = 1;
 }
 
 /**
  * @function updates the player object
  * {DOMHighResTimeStamp} time the elapsed time since the last frame
  */
-Player.prototype.update = function(time) {
+Player.prototype.update = function (time) {
   switch(this.state) {
     case "idle":
       this.timer += time;
       if(this.timer > MS_PER_FRAME) {
         this.timer = 0;
         this.frame += 1;
-        if(this.frame > 3) this.frame = 0;
+        if (this.frame > 3) this.frame = 0;
       }
       break;
-    // TODO: Implement your player's update by state
+        // TODO: Implement your player's update by state
+      case "up":
+      case "down":
+      case "right":
+          this.inputLock = 1;
+          this.timer += time;
+          if (this.timer > MS_PER_FRAME) {
+              this.timer = 0;
+              if (this.frameDelay > 0)
+              {
+                  this.frameDelay -= 1;
+              }
+              else {
+                  this.frame += 1;
+                  this.frameDelay = 1;
+              }
+              if (this.frame > 3) {
+                  this.frame = 0;
+                  this.state = "idle";
+                  this.inputLock = 0;
+              }
+          }         
+          break;
   }
 }
 
@@ -158,17 +239,25 @@ Player.prototype.update = function(time) {
  */
 Player.prototype.render = function(time, ctx) {
   switch(this.state) {
-    case "idle":
+      case "idle":
       ctx.drawImage(
         // image
         this.spritesheet,
         // source rectangle
         this.frame * 64, 64, this.width, this.height,
         // destination rectangle
-        this.x, this.y, this.width, this.height
+        this.x , this.y, this.width, this.height
       );
       break;
-    // TODO: Implement your player's redering according to state
+        // TODO: Implement your player's rendering according to state
+      case "up":
+      case "down":
+      case "right":
+          ctx.drawImage(
+              this.spritesheet,
+              this.frame * 64, 0, this.width, this.height, this.x, this.y, this.width, this.height);
+          break;
+
   }
 }
 
