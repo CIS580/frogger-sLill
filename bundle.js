@@ -11,16 +11,17 @@ var game = new Game(canvas, update, render);
 var instructionsDiv = document.getElementById('instructions');
 var scoreDiv = document.getElementById('scoreDiv');
 var levelDiv = document.getElementById('levelDiv');
-var player = new Player({ x: 10, y: 240 })
+var player = new Player({ x: 15, y: 240 })
 
 var background = new Image();
 background.src = './assets/Background.png';
-var regCar = new Image();
-regCar.src = './assets/cars_mini.png';
 
+var timeSinceLastCar = 0;
+var spawnCar;
 var UpArrow = 38, DownArrow = 40, RightArrow = 39;
 var level = 1;
 var score = 0;
+var regCarArr = [];
 
 instructionsDiv.innerHTML = "Reach the other side safely to advance to the next level";
 /**
@@ -35,6 +36,67 @@ var masterLoop = function (timestamp) {
 }
 masterLoop(performance.now());
 
+function RegCar(lane)
+{
+    this.baseSpeed;
+    this.width = 60;
+    this.height = 86;
+    this.x;
+    this.y;
+    this.spritesheet  = new Image();
+    this.spritesheet.src = encodeURI('assets/cars_mini.png');
+    this.color = Math.floor(Math.random() * 3);
+
+    switch (lane){
+        case 1:
+            this.x = 100;
+            this.y = 155;
+            break;
+        case 2:
+            this.x = 150;
+            this.y = 155;
+            break;
+        case 3:
+            this.x = 200;
+            this.y = 155;
+            break;
+    }
+}
+
+RegCar.prototype.update = function(time) {
+
+}
+
+RegCar.prototype.render = function(time,ctx){
+
+    ctx.drawImage(
+    this.spritesheet,
+    this.color * 60, 0, this.width, this.height, this.x, this.y, this.width, this.height);
+}
+
+function raceCar(lane)
+{
+    this.baseSpeed;
+    this.x;
+    this.y;
+    this.spritesheet  = new Image();
+    this.spritesheet.src = encodeURI('assets/cars_racer.png');
+
+    switch (lane){
+        case 1:
+            this.x = 100;
+            this.y = 155;
+            break;
+        case 2:
+            this.x = 150;
+            this.y = 155;
+            break;
+        case 3:
+            this.x = 200;
+            this.y = 155;
+            break;
+    }
+}
 
 function gameOver()
 {
@@ -43,6 +105,7 @@ function gameOver()
 
 function nextLevel()
 {
+    regCarArr = [];
     player.x = 10;
     player.y = 240;
     level += 1;
@@ -59,9 +122,15 @@ function nextLevel()
  */
 function update(elapsedTime) {
     player.update(elapsedTime);
+    
+    timeSinceLastCar += elapsedTime;
+    if(timeSinceLastCar > 2000)
+    {
+        timeSinceLastCar = 0;
+        spawnCar = 1;
+    }
     // TODO: Update the game objects
     //Movement events
-    player.timeSinceInput += elapsedTime;
     if (player.inputLock == 0) {
         window.onkeydown = function (event) {
             switch (event.keyCode) {
@@ -120,8 +189,21 @@ function render(elapsedTime, ctx) {
     //Clear previous frame
     ctx.clearRect(0, 0, game.HEIGHT, game.WIDTH);
     ctx.drawImage(background, 0, 0);
-    ctx.drawImage(regCar, 0, 0);
     player.render(elapsedTime, ctx);
+
+
+    for(i = 0; i < regCarArr.length; i++)
+    {
+        regCarArr[i].render(elapsedTime, ctx);
+    }
+    if(spawnCar == 1)
+    {
+        var carLane = (Math.floor(Math.random() * 3) * 1);
+        var regCar = new RegCar(carLane);
+        regCar.render(elapsedTime, ctx);
+        regCarArr[regCarArr.length] = regCar;
+        spawnCar = 0;
+    }
 }
 
 },{"./game.js":2,"./player.js":3}],2:[function(require,module,exports){
@@ -205,13 +287,15 @@ module.exports = exports = Player;
  * @param {Postition} position object specifying an x and y
  */
 function Player(position) {
+
+    var frogType = Math.floor(Math.random()*4);
   this.state = "idle";
   this.x = position.x;
   this.y = position.y;
   this.width  = 64;
   this.height = 64;
   this.spritesheet  = new Image();
-  this.spritesheet.src = encodeURI('assets/PlayerSprite2.png');
+  this.spritesheet.src = encodeURI('assets/PlayerSprite' + frogType + '.png');
   this.timer = 0;
   this.frame = 0;
   this.inputLock = 0;
