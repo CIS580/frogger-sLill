@@ -8,6 +8,9 @@ const Player = require('./player.js');
 /* Global variables */
 var canvas = document.getElementById('screen');
 var game = new Game(canvas, update, render);
+var instructionsDiv = document.getElementById('instructions');
+var scoreDiv = document.getElementById('scoreDiv');
+var levelDiv = document.getElementById('levelDiv');
 var player = new Player({ x: 10, y: 240 })
 
 var background = new Image();
@@ -16,7 +19,10 @@ var regCar = new Image();
 regCar.src = './assets/cars_mini.png';
 
 var UpArrow = 38, DownArrow = 40, RightArrow = 39;
+var level = 1;
+var score = 0;
 
+instructionsDiv.innerHTML = "Reach the other side safely to advance to the next level";
 /**
  * @function masterLoop
  * Advances the game in sync with the refresh rate of the screen
@@ -29,6 +35,19 @@ var masterLoop = function (timestamp) {
 }
 masterLoop(performance.now());
 
+
+function gameOver()
+{
+
+}
+
+function nextLevel()
+{
+    player.x = 10;
+    player.y = 240;
+    level += 1;
+    levelDiv.innerHTML = level;
+}
 
 /**
  * @function update
@@ -63,6 +82,11 @@ function update(elapsedTime) {
                 case 68:
                     player.x += 85;
                     player.state = "right";
+
+                    if ((game.WIDTH - player.x) < 90)
+                    {
+                        nextLevel();
+                    }
                     break;
                     //down
                 case 40:

@@ -2,3 +2,42 @@ canvas#screen {
   border: 2px solid #333;
   box-shadow: 4px 4px 4px #777;
 }
+
+#score {
+    font-size: 15px;
+    font-weight: bold;
+    position: absolute;
+    top: 520px;
+    left: 12px;
+    z-index: 1;
+}
+
+#level {
+    font-size: 15px;
+    font-weight: bold;
+    position: absolute;
+    top: 545px;
+    left: 12px;
+    z-index: 1;
+}
+
+#scoreDiv {
+    font-size: 15px;
+    color: lightblue;
+    font-weight: bold;
+    position: absolute;
+    top: 520px;
+    left: 60px;
+    z-index: 1;
+}
+
+#levelDiv {
+    font-size: 15px;
+    color: lightblue;
+    font-weight: bold;
+    position: absolute;
+    top: 545px;
+    left: 60px;
+    z-index: 1;
+}
+
