@@ -1,19 +1,11 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-"use strict;"
-
-/* Classes */
-const Game = require('./game.js');
-const Player = require('./player.js');
 
 /* Global variables */
 var canvas = document.getElementById('screen');
-var game = new Game(canvas, update, render);
 var instructionsDiv = document.getElementById('instructions');
 var scoreDiv = document.getElementById('scoreDiv');
 var levelDiv = document.getElementById('levelDiv');
 var messageDiv = document.getElementById('messageDiv');
 var timerDiv = document.getElementById('timerDiv');
-var player = new Player({ x: 15, y: 240 })
 var UpArrow = 38, DownArrow = 40, RightArrow = 39;
     
 var background = new Image();
@@ -62,20 +54,6 @@ function AABBIntersect(ax, ay, aX, aY, bx, by, bX, bY)
 }
 
 instructionsDiv.innerHTML = "Reach the other side safely to advance to the next level";
-/**
- * @function masterLoop
- * Advances the game in sync with the refresh rate of the screen
- * @param {DOMHighResTimeStamp} timestamp the current time
- */
-var masterLoop = function (timestamp) {
-
-    if (endGame == 0)
-    {
-        game.loop(timestamp);
-        window.requestAnimationFrame(masterLoop);
-    }
-}
-masterLoop(performance.now());
 
 function RegCar(lane)
 {
@@ -414,14 +392,6 @@ function render(elapsedTime, ctx) {
     player.render(elapsedTime, ctx);
 }
 
-},{"./game.js":2,"./player.js":3}],2:[function(require,module,exports){
-"use strict";
-
-/**
- * @module exports the Game class
- */
-module.exports = exports = Game;
-
 /**
  * @constructor Game
  * Creates a new game object
@@ -478,15 +448,7 @@ Game.prototype.loop = function(newTime) {
   this.frontCtx.drawImage(this.backBuffer, 0, 0);
 }
 
-},{}],3:[function(require,module,exports){
-"use strict";
-
 const MS_PER_FRAME = 1000/8;
-
-/**
- * @module exports the Player class
- */
-module.exports = exports = Player;
 
 /**
  * @constructor Player
@@ -578,4 +540,19 @@ Player.prototype.render = function(time, ctx) {
   }
 }
 
-},{}]},{},[1]);
+var game = new Game(canvas, update, render);
+var player = new Player({ x: 15, y: 240 });
+
+/**
+ * @function masterLoop
+ * Advances the game in sync with the refresh rate of the screen
+ * @param {DOMHighResTimeStamp} timestamp the current time
+ */
+var masterLoop = function (timestamp) {
+
+    if (endGame == 0) {
+        game.loop(timestamp);
+        window.requestAnimationFrame(masterLoop);
+    }
+}
+masterLoop(performance.now());
