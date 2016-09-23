@@ -12,6 +12,7 @@ var instructionsDiv = document.getElementById('instructions');
 var scoreDiv = document.getElementById('scoreDiv');
 var levelDiv = document.getElementById('levelDiv');
 var messageDiv = document.getElementById('messageDiv');
+var timerDiv = document.getElementById('timerDiv');
 var player = new Player({ x: 15, y: 240 })
 var UpArrow = 38, DownArrow = 40, RightArrow = 39;
     
@@ -23,11 +24,14 @@ life.src = './assets/life.png';
 var level = 1;
 var score = 0;
 var lives = 3;
+var levelTimer = 0;
+var levelTimerCounter = 60;
 var timeSinceLastCar = 0;
 var timeSinceLastLog = 0;
 var endGame = 0;
 var spawnCar;
 var spawnLog;
+var onLog = 0;
 var regCarArr = [];
 var logArr = [];
 
@@ -40,6 +44,11 @@ function AABBIntersect(ax, ay, aX, aY, bx, by, bX, bY)
     if(ax > bx && ax < bX && ay > by && ay < bY)
     {
         detection = 1;
+
+        if(player.aX > 400)
+        {
+            onLog = 1;
+        }
     }
     //Checking lower right point
     else if (aX > bx && aX < bX && aY > by && aY < bY)
@@ -141,10 +150,10 @@ function Log(lane)
     }
 
     //Adjusted position properties used for collision detection
-    this.ax = this.x + 20;
-    this.ay = this.y + 20;
-    this.aX = this.x + 85;
-    this.aY = this.y + 160;
+    this.ax = this.x;
+    this.ay = this.y;
+    this.aX = this.x + 105;
+    this.aY = this.y + 200;
     
     if (lane == 2 || lane == 4)
     {
@@ -164,8 +173,8 @@ Log.prototype.update = function(time){
         this.y += (this.baseSpeed + (level / 6));
     }
 
-    this.ay = this.y + 30;
-    this.aY = this.y + 160;
+    this.ay = this.y;
+    this.aY = this.y + 150;
 }
 
 Log.prototype.render = function (time, ctx) {
@@ -183,6 +192,7 @@ function gameOver()
 
 function nextLevel()
 {
+    scoreDiv.innerHTML += levelTimerCounter;
     logArr = [];
     regCarArr = [];
     player.x = 10;
@@ -193,6 +203,8 @@ function nextLevel()
     player.aY = player.y + 60;
     level += 1;
     levelDiv.innerHTML = level;
+    levelTimer = 0;
+    levelTimerCounter = 60;
 }
 
 function lifeLost()
@@ -219,6 +231,13 @@ function lifeLost()
  */
 function update(elapsedTime) {
     player.update(elapsedTime);
+
+    levelTimer += elapsedTime;
+    if (levelTimer > 1000)
+    {
+        levelTimer = 0;
+        levelTimerCounter--;
+    }
 
     timeSinceLastCar += elapsedTime;
     if(timeSinceLastCar > 1000)
@@ -309,11 +328,6 @@ function update(elapsedTime) {
         if (detection == 1)
         {
             lifeLost();
-
-            if (lives == 0)
-            {
-                gameOver();
-            }
         }
     }
     for(k = 0; k < logArr.length; k++)
@@ -322,18 +336,24 @@ function update(elapsedTime) {
 
         //Testing for unit collision
         AABBIntersect(player.ax, player.ay, player.aX, player.aY, logArr[k].ax, logArr[k].ay, logArr[k].aX, logArr[k].aY);
-
-        if (detection == 0 && (player.ax > 400 && player.aX > 400))
-        {
-            lifeLost();
-        }
-
-        if (lives == 0) {
-            gameOver();
-        }
     }
 
-    
+    if (onLog == 0 && (player.ax > 400 && player.aX > 400) )
+    {
+        lifeLost();
+    }
+
+    if (levelTimerCounter == 0)
+    {
+        lifeLost();
+    }
+
+    if (lives == 0)
+    {
+        gameOver();
+    }
+
+    onLog = 0;
 }
 
 /**
@@ -348,9 +368,6 @@ function render(elapsedTime, ctx) {
     //Clear previous frame
     ctx.clearRect(0, 0, game.HEIGHT, game.WIDTH);
     ctx.drawImage(background, 0, 0);
-    player.render(elapsedTime, ctx);
-
-    ctx.fillStyle = "red";
 
     //Render Cars
     if(spawnCar == 1)
@@ -392,6 +409,9 @@ function render(elapsedTime, ctx) {
         ctx.drawImage(life, xLoc, 416);
         xLoc = xLoc + 13;
     }
+
+    timerDiv.innerHTML = levelTimerCounter;
+    player.render(elapsedTime, ctx);
 }
 
 },{"./game.js":2,"./player.js":3}],2:[function(require,module,exports){

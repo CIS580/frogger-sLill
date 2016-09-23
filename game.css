@@ -60,3 +60,12 @@ canvas#screen {
 	z-index: 1;
 }
 
+#timerDiv{
+	font-size: 35px;
+	color: red;
+	font-weight: bold;
+	position: absolute;
+	top: 90px;
+	left: 370px;
+	z-index: 1;
+}
