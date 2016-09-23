@@ -11,17 +11,46 @@ var game = new Game(canvas, update, render);
 var instructionsDiv = document.getElementById('instructions');
 var scoreDiv = document.getElementById('scoreDiv');
 var levelDiv = document.getElementById('levelDiv');
+var messageDiv = document.getElementById('messageDiv');
 var player = new Player({ x: 15, y: 240 })
-
+var UpArrow = 38, DownArrow = 40, RightArrow = 39;
+    
 var background = new Image();
 background.src = './assets/Background.png';
+var life = new Image();
+life.src = './assets/life.png';
 
-var timeSinceLastCar = 0;
-var spawnCar;
-var UpArrow = 38, DownArrow = 40, RightArrow = 39;
 var level = 1;
 var score = 0;
+var lives = 3;
+var timeSinceLastCar = 0;
+var timeSinceLastLog = 0;
+var endGame = 0;
+var spawnCar;
+var spawnLog;
 var regCarArr = [];
+var logArr = [];
+
+    // Unit collision function
+
+var detection = 0;
+function AABBIntersect(ax, ay, aX, aY, bx, by, bX, bY)
+{
+    //Checking upper left point
+    if(ax > bx && ax < bX && ay > by && ay < bY)
+    {
+        detection = 1;
+    }
+    //Checking lower right point
+    else if (aX > bx && aX < bX && aY > by && aY < bY)
+    {
+        detection = 1;
+    }
+    else
+    {
+        detection = 0;
+    }
+}
 
 instructionsDiv.innerHTML = "Reach the other side safely to advance to the next level";
 /**
@@ -31,40 +60,52 @@ instructionsDiv.innerHTML = "Reach the other side safely to advance to the next 
  */
 var masterLoop = function (timestamp) {
 
-  game.loop(timestamp);
-  window.requestAnimationFrame(masterLoop);
+    if (endGame == 0)
+    {
+        game.loop(timestamp);
+        window.requestAnimationFrame(masterLoop);
+    }
 }
 masterLoop(performance.now());
 
 function RegCar(lane)
 {
-    this.baseSpeed;
+    this.baseSpeed = 1;
     this.width = 60;
     this.height = 86;
     this.x;
     this.y;
     this.spritesheet  = new Image();
     this.spritesheet.src = encodeURI('assets/cars_mini.png');
-    this.color = Math.floor(Math.random() * 3);
+    this.color = Math.floor(Math.random() * 5);
 
     switch (lane){
         case 1:
             this.x = 100;
-            this.y = 155;
+            this.y = 555;
             break;
         case 2:
-            this.x = 150;
-            this.y = 155;
+            this.x = 190;
+            this.y = 555;
             break;
         case 3:
-            this.x = 200;
-            this.y = 155;
+            this.x = 280;
+            this.y = 555;
             break;
     }
+
+    //Adjusted position properties used for collision detection
+    this.ax = this.x + 5;
+    this.ay = this.y;
+    this.aX = this.x + 60;
+    this.aY = this.y + 80;
 }
 
 RegCar.prototype.update = function(time) {
+    this.y -= (this.baseSpeed * level);
 
+    this.ay = this.y;
+    this.aY = this.y + 80;
 }
 
 RegCar.prototype.render = function(time,ctx){
@@ -74,42 +115,98 @@ RegCar.prototype.render = function(time,ctx){
     this.color * 60, 0, this.width, this.height, this.x, this.y, this.width, this.height);
 }
 
-function raceCar(lane)
+function Log(lane)
 {
     this.baseSpeed;
+    this.width = 125;
+    this.height = 210;
     this.x;
     this.y;
-    this.spritesheet  = new Image();
-    this.spritesheet.src = encodeURI('assets/cars_racer.png');
+    this.spritesheet = new Image();
+    this.spritesheet.src = encodeURI('assets/log2.png');
 
-    switch (lane){
+    switch (lane) {
         case 1:
-            this.x = 100;
-            this.y = 155;
+            this.x = 400;
+            this.y = -200;
             break;
         case 2:
-            this.x = 150;
-            this.y = 155;
+            this.x = 495;
+            this.y = 550;
             break;
         case 3:
-            this.x = 200;
-            this.y = 155;
+            this.x = 580;
+            this.y = -200;
             break;
+    }
+
+    //Adjusted position properties used for collision detection
+    this.ax = this.x + 30;
+    this.ay = this.y + 30;
+    this.aX = this.x + 85;
+    this.aY = this.y + 160;
+    
+    if (lane == 2 || lane == 4)
+    {
+        this.baseSpeed = -0.25;
+    }
+    else
+    {
+        this.baseSpeed = 0.25;
     }
 }
 
+Log.prototype.update = function(time){
+    if (this.baseSpeed < 0) {
+        this.y += (this.baseSpeed - (level / 6));
+    }
+    else {
+        this.y += (this.baseSpeed + (level / 6));
+    }
+
+    this.ay = this.y + 30;
+    this.aY = this.y + 160;
+}
+
+Log.prototype.render = function (time, ctx) {
+    ctx.drawImage(
+this.spritesheet,
+0, 0, this.width, this.height, this.x, this.y, this.width, this.height);
+}
+
+
 function gameOver()
 {
-
+    messageDiv.innerHTML = "Game Over";
+    endGame = 1;
 }
 
 function nextLevel()
 {
+    logArr = [];
     regCarArr = [];
     player.x = 10;
     player.y = 240;
+    player.ax = player.x;
+    player.aX = player.x + 55;
+    player.ay = player.y + 15;
+    player.aY = player.y + 60;
     level += 1;
     levelDiv.innerHTML = level;
+}
+
+function lifeLost()
+{
+    lives--;
+    logArr = [];
+    regCarArr = [];
+    player.x = 10;
+    player.y = 240;
+    player.ax = player.x;
+    player.aX = player.x + 55;
+    player.ay = player.y + 15;
+    player.aY = player.y + 60;
+    detection = 0;
 }
 
 /**
@@ -122,12 +219,19 @@ function nextLevel()
  */
 function update(elapsedTime) {
     player.update(elapsedTime);
-    
+
     timeSinceLastCar += elapsedTime;
-    if(timeSinceLastCar > 2000)
+    if(timeSinceLastCar > 1000)
     {
         timeSinceLastCar = 0;
         spawnCar = 1;
+    }
+
+    timeSinceLastLog += elapsedTime;
+    if (timeSinceLastLog > 500)
+    {
+        timeSinceLastLog = 0;
+        spawnLog = 1
     }
     // TODO: Update the game objects
     //Movement events
@@ -143,13 +247,30 @@ function update(elapsedTime) {
                     }
                     else {
                         player.y -= 85;
+                        player.ay = player.y + 15;
+                        player.aY = player.y + 60;
                         player.state = "up";
+                    }
+                    break;
+                    //left
+                case 37:
+                case 65:
+                    if (player.x < 50) {
+                        player.state = "left";
+                    }
+                    else {
+                        player.x -= 85;
+                        player.ax = player.x;
+                        player.aX = player.x + 55;
+                        player.state = "left";
                     }
                     break;
                     //right
                 case 39:
                 case 68:
                     player.x += 85;
+                    player.ax = player.x;
+                    player.aX = player.x + 55;
                     player.state = "right";
 
                     if ((game.WIDTH - player.x) < 90)
@@ -165,6 +286,8 @@ function update(elapsedTime) {
                     }
                     else {
                         player.y += 85;
+                        player.ay = player.y + 15;
+                        player.aY = player.y + 60;
                         player.state = "down";
                     }
 
@@ -175,6 +298,36 @@ function update(elapsedTime) {
     else {
         window.onkeydown = null;
     }
+
+    for(i = 0; i < regCarArr.length; i++)
+    {
+        regCarArr[i].update(elapsedTime);
+
+        //Testing for unit collision
+        AABBIntersect(player.ax, player.ay, player.aX, player.aY, regCarArr[i].ax, regCarArr[i].ay, regCarArr[i].aX, regCarArr[i].aY);
+
+        if (detection == 1)
+        {
+            lifeLost();
+
+            if (lives == 0)
+            {
+                gameOver();
+            }
+        }
+    }
+    for(k = 0; k < logArr.length; k++)
+    {
+        logArr[k].update(elapsedTime);
+
+        //Testing for unit collision
+        if (AABBIntersect(player.ax, player.ay, player.aX, player.aY, logArr[k].ax, logArr[k].ay, logArr[k].aX, logArr[k].aY))
+        {
+            gameOver();
+        }
+    }
+
+    
 }
 
 /**
@@ -191,18 +344,47 @@ function render(elapsedTime, ctx) {
     ctx.drawImage(background, 0, 0);
     player.render(elapsedTime, ctx);
 
+    ctx.fillStyle = "red";
 
-    for(i = 0; i < regCarArr.length; i++)
-    {
-        regCarArr[i].render(elapsedTime, ctx);
-    }
+    //Render Cars
     if(spawnCar == 1)
     {
-        var carLane = (Math.floor(Math.random() * 3) * 1);
+        var carLane = (Math.floor(Math.random() * 4) * 1);
         var regCar = new RegCar(carLane);
-        regCar.render(elapsedTime, ctx);
         regCarArr[regCarArr.length] = regCar;
         spawnCar = 0;
+    }
+    for(i = 0; i < regCarArr.length; i++)
+    {
+        if (regCarArr[i].y > -200)
+        {
+            regCarArr[i].render(elapsedTime, ctx);
+        }
+    }
+
+    //Render Logs
+    if (spawnLog == 1)
+    {
+        var logLane = (Math.floor(Math.random()*4) * 1);
+        var log = new Log(logLane);
+        logArr[logArr.length] = log;
+        spawnLog = 0;
+    }
+
+    for(i = 0; i < logArr.length; i++)
+    {
+        if(logArr[i].y > -200)
+        {
+            logArr[i].render(elapsedTime, ctx);
+        }
+    }
+
+    //Render Lives
+    var xLoc = 45;
+    for(i = 0; i < lives; i++)
+    {
+        ctx.drawImage(life, xLoc, 416);
+        xLoc = xLoc + 13;
     }
 }
 
@@ -266,9 +448,8 @@ Game.prototype.loop = function(newTime) {
 
   this.render(elapsedTime, this.frontCtx);
 
-    // Flip the back buffer
+  // Flip the back buffer
   this.frontCtx.drawImage(this.backBuffer, 0, 0);
-
 }
 
 },{}],3:[function(require,module,exports){
@@ -288,7 +469,7 @@ module.exports = exports = Player;
  */
 function Player(position) {
 
-    var frogType = Math.floor(Math.random()*4);
+  var frogType = Math.floor(Math.random()*4);
   this.state = "idle";
   this.x = position.x;
   this.y = position.y;
@@ -299,7 +480,12 @@ function Player(position) {
   this.timer = 0;
   this.frame = 0;
   this.inputLock = 0;
-  this.frameDelay = 1;
+
+  //Adjusted position properties used for collision detection
+  this.ax = position.x;
+  this.ay = position.y + 15;
+  this.aX = position.x + 55;
+  this.aY = position.y + 60;
 }
 
 /**
@@ -320,18 +506,12 @@ Player.prototype.update = function (time) {
       case "up":
       case "down":
       case "right":
+      case "left":
           this.inputLock = 1;
           this.timer += time;
           if (this.timer > MS_PER_FRAME) {
               this.timer = 0;
-              if (this.frameDelay > 0)
-              {
-                  this.frameDelay -= 1;
-              }
-              else {
-                  this.frame += 1;
-                  this.frameDelay = 1;
-              }
+              this.frame += 1;
               if (this.frame > 3) {
                   this.frame = 0;
                   this.state = "idle";
@@ -363,6 +543,7 @@ Player.prototype.render = function(time, ctx) {
       case "up":
       case "down":
       case "right":
+      case "left":
           ctx.drawImage(
               this.spritesheet,
               this.frame * 64, 0, this.width, this.height, this.x, this.y, this.width, this.height);

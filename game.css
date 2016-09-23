@@ -41,3 +41,22 @@ canvas#screen {
     z-index: 1;
 }
 
+#messageDiv {
+	font-size: 45px;
+	color: black;
+	font-weight: bold;
+	position: absolute;
+	top: 285px;
+	left: 285px;
+	z-index: 1;
+}
+
+#livesDiv{
+	font-size: 15px;
+	font-weight: bold;
+	position: absolute;
+	top: 495px;
+	left: 12px;
+	z-index: 1;
+}
+

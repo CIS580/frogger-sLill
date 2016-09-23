@@ -1,6 +1,6 @@
 "use strict;"
 
-/* Classes */
+/* Classess */
 const Game = require('./game.js');
 const Player = require('./player.js');
 
