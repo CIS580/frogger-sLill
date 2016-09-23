@@ -141,8 +141,8 @@ function Log(lane)
     }
 
     //Adjusted position properties used for collision detection
-    this.ax = this.x + 30;
-    this.ay = this.y + 30;
+    this.ax = this.x + 20;
+    this.ay = this.y + 20;
     this.aX = this.x + 85;
     this.aY = this.y + 160;
     
@@ -321,8 +321,14 @@ function update(elapsedTime) {
         logArr[k].update(elapsedTime);
 
         //Testing for unit collision
-        if (AABBIntersect(player.ax, player.ay, player.aX, player.aY, logArr[k].ax, logArr[k].ay, logArr[k].aX, logArr[k].aY))
+        AABBIntersect(player.ax, player.ay, player.aX, player.aY, logArr[k].ax, logArr[k].ay, logArr[k].aX, logArr[k].aY);
+
+        if (detection == 0 && (player.ax > 400 && player.aX > 400))
         {
+            lifeLost();
+        }
+
+        if (lives == 0) {
             gameOver();
         }
     }
